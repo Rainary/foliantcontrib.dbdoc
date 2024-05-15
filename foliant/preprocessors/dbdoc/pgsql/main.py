@@ -2,7 +2,7 @@ from copy import deepcopy
 from logging import getLogger
 
 from ..base.main import LibraryNotInstalledError
-from .queries import ColumnsQuery
+from .queries import ColumnsQuery, ColumnsQueryCustom
 from .queries import ForeignKeysQuery
 from .queries import FunctionsQuery
 from .queries import ParametersQuery
@@ -69,7 +69,7 @@ class PGSQLRenderer(DBRendererBase):
             logger.debug(f'Tables query:\n\n {q_tables.sql}')
             tables = q_tables.run()
 
-            q_columns = ColumnsQuery(self.con, filters)
+            q_columns = ColumnsQueryCustom(self.con, filters)
             logger.debug(f'Columns query:\n\n {q_columns.sql}')
             columns = q_columns.run()
 

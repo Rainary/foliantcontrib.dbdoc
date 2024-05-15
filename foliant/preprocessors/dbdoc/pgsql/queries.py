@@ -144,6 +144,39 @@ class ColumnsQuery(QueryBase):
     _filter_fields = {SCHEMA: 'c.table_schema',
                       TABLE_NAME: 'c.table_name'}
 
+class ColumnsQueryCustom(QueryBase):
+
+    base_query = '''SELECT 
+      c.relname AS table_name,
+      a.attnum AS ordinal_position,
+      a.attname AS column_name,
+      CASE 
+          WHEN NOT a.attnotnull THEN 'YES'
+          ELSE 'NO'
+      END AS is_nullable,
+      pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
+      pg_catalog.pg_get_expr(d.adbin, d.adrelid) AS column_default,
+      pd.description AS column_description
+    FROM 
+        pg_attribute a
+    JOIN 
+        pg_class c ON a.attrelid = c.oid
+    LEFT JOIN 
+        pg_attrdef d ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+    LEFT JOIN 
+        pg_description pd ON c.oid = pd.objoid AND a.attnum = pd.objsubid
+    WHERE 
+        c.relkind IN ('r', 'm') 
+        AND c.relname NOT LIKE 'pg_%' 
+        AND c.relnamespace NOT IN (SELECT oid FROM pg_namespace WHERE nspname = 'information_schema') 
+        AND a.attnum > 0
+    {filters}
+    ORDER BY 
+        c.relname,
+        a.attnum'''
+
+    _filter_fields = {SCHEMA: 'c.table_schema',
+                      TABLE_NAME: 'c.table_name'}
 
 class ForeignKeysQuery(QueryBase):
 
